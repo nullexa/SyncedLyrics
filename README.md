@@ -1,6 +1,6 @@
 # SyncedLyrics
 
-SongSync is a lightweight tool to extract word-by-word synced lyrics from YouTube Music. It converts lyrics displayed by the Better Lyrics extension (https://better-lyrics.boidu.dev/) into the Enhanced LRC (ELRC) format for easy copying.
+SongSync is a lightweight tool to extract word-by-word synced lyrics from YouTube Music. It converts lyrics displayed by the Better Lyrics extension (https://better-lyrics.boidu.dev/) into Enhanced LRC (ELRC) format for easy copying.
 
 > [!NOTE]
 > This extension does not fetch from an external source. It specifically extracts the data that Better Lyrics has already injected into your browser page. Then convert it to Enhanced LRC (ELRC) format
