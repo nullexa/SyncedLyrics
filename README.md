@@ -18,4 +18,4 @@ SongSync is a lightweight tool to extract word-by-word synced lyrics from YouTub
 - activeTab
 - host permissions to https://music.youtube.com/*
 
-> This extension is not signed, you have to add this as a Debug Add-on (Temporary Extension)
+> This extension is not signed, you have to use this as a Debug Add-on (Temporary Extension)
