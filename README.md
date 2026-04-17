@@ -6,4 +6,4 @@ A firefox extention to extract Word-by-word synced lyrics from Youtube Music usi
 
 ### Permissions
 - activeTab
-- and host permissions to https://music.youtube.com/*
+- and host permissions to " https://music.youtube.com/* "
