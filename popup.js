@@ -43,7 +43,7 @@ async function refreshPreview() {
 
   const html = await requestBlyricsFromTab(tab);
 if (!html) {
-  setStatus('No <div.blyrics-container> found.');
+  setStatus('No synced lyrics found.');
   previewEl.textContent = '—';
   fullHTML = null;
   return;
@@ -53,7 +53,7 @@ fullHTML = html; // store full html
 
 setStatus('Extracted Lyrics — preview');
 
-////////////// extract lyrics /////////////////
+// extract lyrics 
 
 function parseOuterHTML(html) {
   if (!html) return null;
@@ -98,20 +98,20 @@ function extractLyricsJSON(containerEl) {
 const containerEl = parseOuterHTML(fullHTML);
 const lyricsJSON = extractLyricsJSON(containerEl);
 
-console.log("fullHTML length:", fullHTML?.length);
-console.log(JSON.stringify(lyricsJSON, null, 2));
+// console.log("fullHTML length:", fullHTML?.length);
+// console.log(JSON.stringify(lyricsJSON, null, 2));
 
 // download json file
-function downloadJSON(data, filename = "lyrics_full.json") {
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+// function downloadJSON(data, filename = "lyrics_full.json") {
+//   const json = JSON.stringify(data, null, 2);
+//   const blob = new Blob([json], { type: "application/json" });
+//   const url = URL.createObjectURL(blob);
+//   const a = document.createElement("a");
+//   a.href = url;
+//   a.download = filename;
+//   a.click();
+//   URL.revokeObjectURL(url);
+// }
 
 // Usage (after you have lyricsJSON):
 // downloadJSON(lyricsJSON);
@@ -153,8 +153,7 @@ function formatLyrics(data) {
   }).join("\n");
 }
 
-const input = lyricsJSON;
-Lyrics = formatLyrics(input);
+Lyrics = formatLyrics(lyricsJSON);
 // const output = formatLyrics(input);
 // console.log(output);
 
@@ -163,7 +162,7 @@ previewEl.textContent = Lyrics
 }
 
 copyBtn.addEventListener('click', async () => {
-  if (!fullHTML) {
+  if (!Lyrics) {
     setStatus('Nothing to copy');
     return;
   }
@@ -176,7 +175,7 @@ copyBtn.addEventListener('click', async () => {
   }
 });
 
-////////// copy from storage //////////////
+// copy from storage 
 
 // copyBtn.addEventListener('click', async () => {
 //   const tab = await getActiveTab();
