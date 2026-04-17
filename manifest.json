@@ -4,7 +4,6 @@
   "version": "0.1",
   "description": "Extract Word-by-word synced lyrics from music.youtube.com using Better Lyrics (https://better-lyrics.boidu.dev/) extention",
   "permissions": [
-    "storage",
     "activeTab"
   ],
   "host_permissions": [
