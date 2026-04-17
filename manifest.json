@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "SongSync",
+  "version": "0.1",
+  "description": "Extract Word-by-word synced lyrics from music.youtube.com using Better Lyrics (https://better-lyrics.boidu.dev/) extention",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://music.youtube.com/*"
+  ],
+  "action": {
+    "default_title": "SongSync preview",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://music.youtube.com/*"],
+      "js": ["content_script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
