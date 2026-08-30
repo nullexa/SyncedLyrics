@@ -163,8 +163,7 @@ async function refreshPreview() {
 }
 
 /**
- * If you have any doubts about how and why use this downloadLrc function
- * implimented they way it is, refer to this answer on stackoverflow
+ * refer to this answer on stackoverflow
  * https://stackoverflow.com/a/61738856
  */
 
