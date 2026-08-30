@@ -2,9 +2,12 @@ const statusEl = document.getElementById('status');
 const previewEl = document.getElementById('preview');
 const copyBtn = document.getElementById('copyBtn');
 const refreshBtn = document.getElementById('refreshBtn');
+const downloadBtn = document.getElementById('downloadBtn');
 
 let fullHTML = null;
 let Lyrics = null;
+let info = null;
+let filename = null;
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -20,6 +23,17 @@ async function requestBlyricsFromTab(tab) {
     const response = await browser.tabs.sendMessage(tab.id, { action: 'getBlyrics' });
     // response expected: { html: ... , url: ... } or undefined
     return response && response.html ? response.html : null;
+  } catch (e) {
+    // no content script in tab or other error
+    return null;
+  }
+}
+
+async function requestSongInfoFromTab(tab) {
+  try {
+    const response = await browser.tabs.sendMessage(tab.id, { action: 'getInfo' });
+    // response expected: { html: ... } or undefined
+    return response ?? null;
   } catch (e) {
     // no content script in tab or other error
     return null;
@@ -42,124 +56,142 @@ async function refreshPreview() {
   }
 
   const html = await requestBlyricsFromTab(tab);
-if (!html) {
-  setStatus('No synced lyrics found.');
-  previewEl.textContent = '—';
-  fullHTML = null;
-  return;
-}
+  const songInfo = await requestSongInfoFromTab(tab);
 
-fullHTML = html; // store full html
+  if (!html) {
+    setStatus('No synced lyrics found.');
+    previewEl.textContent = '—';
+    fullHTML = null;
+    return;
+  }
 
-setStatus('Extracted Lyrics — preview');
+  fullHTML = html; // store full html
+  info = songInfo; // store song info
+  filename = `${info}.lrc`
 
-// extract lyrics 
+  setStatus('Extracted Lyrics — preview');
 
-function parseOuterHTML(html) {
-  if (!html) return null;
+  // extract lyrics 
 
-  const doc = new DOMParser().parseFromString(html, "text/html");
+  function parseOuterHTML(html) {
+    if (!html) return null;
 
-  // Wrap body children in a container if multiple exist
-  if (doc.body.children.length === 0) return null;
-  if (doc.body.children.length === 1) return doc.body.firstElementChild;
+    const doc = new DOMParser().parseFromString(html, "text/html");
 
-  // If multiple top-level nodes, wrap them in a <div>
-  const wrapper = document.createElement("div");
-  Array.from(doc.body.children).forEach(c => wrapper.appendChild(c));
-  return wrapper;
-}
+    // Wrap body children in a container if multiple exist
+    if (doc.body.children.length === 0) return null;
+    if (doc.body.children.length === 1) return doc.body.firstElementChild;
 
-function extractLyricsJSON(containerEl) {
-  const lines = [];
+    // If multiple top-level nodes, wrap them in a <div>
+    const wrapper = document.createElement("div");
+    Array.from(doc.body.children).forEach(c => wrapper.appendChild(c));
+    return wrapper;
+  }
 
-  const lineEls = containerEl.querySelectorAll(".blyrics--line");
-  lineEls.forEach((lineEl) => {
-    const lineWords = [];
-    lineEl.querySelectorAll(".blyrics--word").forEach((wordEl) => {
-      lineWords.push({
-        text: wordEl.textContent,
-        start: parseFloat(wordEl.dataset.time) || 0,
-        duration: parseFloat(wordEl.dataset.duration) || 0,
+  function extractLyricsJSON(containerEl) {
+    const lines = [];
+
+    const lineEls = containerEl.querySelectorAll(".blyrics--line");
+    lineEls.forEach((lineEl) => {
+      const lineWords = [];
+      lineEl.querySelectorAll(".blyrics--word").forEach((wordEl) => {
+        lineWords.push({
+          text: wordEl.textContent,
+          start: parseFloat(wordEl.dataset.time) || 0,
+          duration: parseFloat(wordEl.dataset.duration) || 0,
+        });
+      });
+
+      lines.push({
+        lineNumber: parseInt(lineEl.dataset.lineNumber) || 0,
+        start: parseFloat(lineEl.dataset.time) || 0,
+        duration: parseFloat(lineEl.dataset.duration) || 0,
+        words: lineWords,
       });
     });
 
-    lines.push({
-      lineNumber: parseInt(lineEl.dataset.lineNumber) || 0,
-      start: parseFloat(lineEl.dataset.time) || 0,
-      duration: parseFloat(lineEl.dataset.duration) || 0,
-      words: lineWords,
-    });
-  });
+    return lines;
+  }
 
-  return lines;
+  const containerEl = parseOuterHTML(fullHTML);
+  const lyricsJSON = extractLyricsJSON(containerEl);
+
+  /**
+   * Formats JSON lyrics into a single-line Enhanced LRC string.
+   * @param {Array} data - The JSON input array.
+   * @returns {string} - The formatted lyric string.
+   */
+  function formatLyrics(data) {
+    // Helper to convert seconds to [mm:ss.xx]
+    const formatTime = (seconds) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = (seconds % 60).toFixed(2);
+      const mm = mins.toString().padStart(2, '0');
+      const ss = secs.toString().padStart(5, '0');
+      return `${mm}:${ss}`;
+    };
+
+    return data.map(line => {
+      // Get the starting timestamp for the line
+      const lineStartTime = formatTime(line.start);
+
+      // Filter out objects that are just spaces or empty strings
+      const actualWords = line.words.filter(w => w.text.trim().length > 0);
+
+      // Build the word sequence with end-time tags: Word<end_time>
+      const formattedWords = actualWords.map((wordObj, index) => {
+        const endTime = formatTime(wordObj.start + wordObj.duration);
+        const text = wordObj.text.trim();
+
+        // Add a space before the word unless it's the first word of the line
+        const prefix = index === 0 ? "" : " ";
+        return `${prefix}${text}<${endTime}>`;
+      }).join("");
+
+      // Return the single formatted line
+      return `[${lineStartTime}]${formattedWords}`;
+    }).join("\n");
+  }
+
+  Lyrics = formatLyrics(lyricsJSON);
+  // const output = formatLyrics(input);
+  // console.log(output);
+
+  previewEl.textContent = Lyrics;
+  // console.log('this is the variable :)', Lyrics);
+
 }
-
-const containerEl = parseOuterHTML(fullHTML);
-const lyricsJSON = extractLyricsJSON(containerEl);
-
-// console.log("fullHTML length:", fullHTML?.length);
-// console.log(JSON.stringify(lyricsJSON, null, 2));
-
-// download json file
-// function downloadJSON(data, filename = "lyrics_full.json") {
-//   const json = JSON.stringify(data, null, 2);
-//   const blob = new Blob([json], { type: "application/json" });
-//   const url = URL.createObjectURL(blob);
-//   const a = document.createElement("a");
-//   a.href = url;
-//   a.download = filename;
-//   a.click();
-//   URL.revokeObjectURL(url);
-// }
-
-// Usage (after you have lyricsJSON):
-// downloadJSON(lyricsJSON);
 
 /**
- * Formats JSON lyrics into a single-line Enhanced LRC string.
- * @param {Array} data - The JSON input array.
- * @returns {string} - The formatted lyric string.
+ * If you have any doubts about how and why use this downloadLrc function
+ * implimented they way it is, refer to this answer on stackoverflow
+ * https://stackoverflow.com/a/61738856
  */
-function formatLyrics(data) {
-  // Helper to convert seconds to [mm:ss.xx]
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = (seconds % 60).toFixed(2);
-    const mm = mins.toString().padStart(2, '0');
-    const ss = secs.toString().padStart(5, '0'); 
-    return `${mm}:${ss}`;
-  };
 
-  return data.map(line => {
-    // Get the starting timestamp for the line
-    const lineStartTime = formatTime(line.start);
-    
-    // Filter out objects that are just spaces or empty strings
-    const actualWords = line.words.filter(w => w.text.trim().length > 0);
+function downloadLrc(lrcText, filename = 'lyrics.lrc') {
+  // Ensure the filename ends with .lrc
+  if (!filename.endsWith('.lrc')) {
+    filename += '.lrc';
+  }
 
-    // Build the word sequence with end-time tags: Word<end_time>
-    const formattedWords = actualWords.map((wordObj, index) => {
-      const endTime = formatTime(wordObj.start + wordObj.duration);
-      const text = wordObj.text.trim();
-      
-      // Add a space before the word unless it's the first word of the line
-      const prefix = index === 0 ? "" : " ";
-      return `${prefix}${text}<${endTime}>`;
-    }).join("");
+  // Create a Blob containing lyrics
+  const blob = new Blob([lrcText], { type: 'text/plain;charset=utf-8;' });
 
-    // Return the single formatted line
-    return `[${lineStartTime}]${formattedWords}`;
-  }).join("\n");
+  //Create an anchor element and trigger the download
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
 }
 
-Lyrics = formatLyrics(lyricsJSON);
-// const output = formatLyrics(input);
-// console.log(output);
-
-previewEl.textContent = Lyrics
-
-}
+filename = `${info}-lyrics.lrc`
 
 copyBtn.addEventListener('click', async () => {
   if (!Lyrics) {
@@ -175,23 +207,19 @@ copyBtn.addEventListener('click', async () => {
   }
 });
 
-// copy from storage 
+downloadBtn.addEventListener('click', async () => {
+  if (!Lyrics) {
+    setStatus('Nothing to Download');
+    return;
+  }
 
-// copyBtn.addEventListener('click', async () => {
-//   const tab = await getActiveTab();
-//   if (!tab) return;
-
-//   const obj = await browser.storage.local.get(tab.url);
-//   const html = obj[tab.url]?.value;
-
-//   if (!html) {
-//     setStatus('No stored value');
-//     return;
-//   }
-
-//   await navigator.clipboard.writeText(html);
-//   setStatus('Copied from storage (full)');
-// });
+  try {
+    downloadLrc(Lyrics, filename);
+    setStatus('.lrc file downloaded');
+  } catch {
+    setStatus('Download failed');
+  }
+});
 
 refreshBtn.addEventListener('click', refreshPreview);
 
