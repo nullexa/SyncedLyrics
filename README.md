@@ -5,7 +5,29 @@ SongSync is a lightweight tool to extract word-by-word synced lyrics from YouTub
 > [!NOTE]
 > This extension does not fetch from an external source. It specifically extracts the data that Better Lyrics has already injected into your browser page. Then convert it to Enhanced LRC (ELRC) format
 
-### How to use
+## How to load the extension
+
+#### In Google Chrome
+
+1. Open Google Chrome.
+2. Navigate to `chrome://extensions/` by typing it into the address bar.
+3. Toggle the **Developer mode** switch in the top-right corner to **On**.
+4. Click the **Load unpacked** button in the top-left corner.
+5. Select the root folder of this project (the directory containing the `manifest.json` file).
+
+
+#### In Mozilla Firefox
+
+1. Open Mozilla Firefox.
+2. Navigate to `about:debugging` in the address bar.
+3. Click on **This Firefox** in the left-hand sidebar.
+4. Click the **Load Temporary Add-on...** button.
+5. Select the project's `manifest.json` file or any other file inside the root directory.
+
+>**Note:** Firefox removes temporary extensions automatically when you close or restart the browser. You must reload it using these steps when restarting development.
+
+## How to use the extension
+
 - Open YouTube Music and start a track.
 - Click on the Lyrics tab 
 - Wait until Better Lyrics find and sync up the lyrics
@@ -14,8 +36,6 @@ SongSync is a lightweight tool to extract word-by-word synced lyrics from YouTub
 > [!IMPORTANT]
 > To this extension to successfully extract the lyrics, you have to wait until the 'Better Lyrics' extension fully sync up. If not, it will extract with inaccurate timestamps
 
-### Permissions
+## Permissions
 - activeTab
 - host permissions to https://music.youtube.com/*
-
-> This extension is not signed, you have to use this as a Debug Add-on (Temporary Extension)
