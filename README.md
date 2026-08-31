@@ -1,13 +1,5 @@
-<div align="center" >
-<div style="max-width: 100%; overflow-x: auto; white-space: pre;">
-<pre style="line-height: 1.2; background-color: transparent; display: inline-block; text-align: left; margin: 0 auto; font-size: 11px; font-weight: bold; color: #27d579">
-   ____                     ____            _       
-  / __/_ _____  _______ ___/ / /  __ ______(_)______
- _\ \/ // / _ \/ __/ -_) _  / /__/ // / __/ / __(_-<
-/___/\_, /_//_/\__/\__/\_,_/____/\_, /_/ /_/\__/___/
-    /___/                       /___/               
-</pre>
-</div>
+<div align="center">
+  <img src="./logo.svg" alt="Header Banner" />
 </div>
 
 
