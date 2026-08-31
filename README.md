@@ -12,7 +12,7 @@ SongSync is a lightweight tool to extract word-by-word synced lyrics from YouTub
 
 First, download the project as a .zip file and extract it (or clone the repository).
 
-#### For Google Chrome
+#### 🟩 For Google Chrome
 
 1. Open Google Chrome.
 2. Navigate to `chrome://extensions/` by typing it into the address bar.
@@ -20,7 +20,7 @@ First, download the project as a .zip file and extract it (or clone the reposito
 4. Click the **Load unpacked** button in the top-left corner.
 5. Select the extracted folder of this project (the directory containing the `manifest.json` file).
 
-#### For Mozilla Firefox
+#### 🟩 For Mozilla Firefox
 
 1. Open Mozilla Firefox.
 2. Navigate to `about:debugging` in the address bar.
