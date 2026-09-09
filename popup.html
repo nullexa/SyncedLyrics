@@ -1,64 +1,188 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>SyncedLyrics preview</title>
-    <style>
-      body {
-        font-family: Courier New;
-        width: 360px;
-        padding: 10px;
-        background-color: #121318;
-        color: #e2e3e8;
-      }
-      #status {
-        font-size: 12px;
-        color: #8f8f8f;
-        margin-bottom: 6px;
-      }
-      pre#preview {
-        font-family: Courier New;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        max-height: 200px;
-        overflow: auto;
-        /* background: #f7f7f7; */
-        border-radius: 6px;
-        padding: 8px;
-        font-family: monospace;
-        font-size: 11px;
-      }
-      .row {
-        display: flex;
-        gap: 8px;
-        margin-top: 8px;
-      }
-      button {
-        flex: 0 0 auto;
-        padding: 6px 10px;
-        border-radius: 6px;
-        background-color: #183578;
-        color: #e2e3e8;
-        margin: 4px 2px;
-        text-decoration: none;
-        border: none;
-        font-size: 15px;
-        text-align: center;
-        outline: none;
-        cursor: pointer;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="status">Loading...</div>
-    <pre id="preview">—</pre>
-    <div class="row">
-      <button id="refreshBtn">Refresh</button>
-      <button id="copyBtn">Copy</button>
-      <button id="downloadBtn">Download</button>
-    </div>
 
-    <script src="popup.js"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SyncedLyrics preview</title>
+  <style>
+    body {
+      font-family: Courier New;
+      width: 360px;
+      padding: 10px;
+      background-color: #121318;
+      color: #e2e3e8;
+    }
+
+    #status {
+      font-size: 12px;
+      color: #8f8f8f;
+      margin-bottom: 6px;
+    }
+
+    pre#preview {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 200px;
+      overflow: auto;
+      /* background: #f7f7f7; */
+      border-radius: 6px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      height: 100px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    button {
+      flex: 0 0 auto;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background-color: #183578;
+      color: #e2e3e8;
+      margin: 4px 2px;
+      text-decoration: none;
+      border: none;
+      font-size: 15px;
+      text-align: center;
+      outline: none;
+      cursor: pointer;
+      font-family: Courier New;
+    }
+
+    label[for="pet-select"] {
+      display: block;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+      color: #e2e3e8;
+      margin-bottom: 6px;
+    }
+
+    #pet-select {
+      width: 100%;
+      max-width: 360px;
+      padding: 8px 12px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+      background-color: #1a1c23;
+      color: #e2e3e8;
+      border: 1px solid #2e313d;
+      border-radius: 6px;
+      outline: none;
+      cursor: pointer;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #pet-select:focus {
+      border-color: #183578;
+      box-shadow: 0 0 0 2px rgba(24, 53, 120, 0.4);
+    }
+
+    #pet-select option {
+      background-color: #1a1c23;
+      color: #e2e3e8;
+      font-family: 'Courier New', Courier, monospace;
+      padding: 8px;
+    }
+
+
+
+
+
+    :root {
+      --bg-main: #121318;
+      --bg-input: #1a1c23;
+      --accent-color: #183578;
+      --border-color: #2e313d;
+      --text-main: #e2e3e8;
+      --text-muted: #8f8f8f;
+    }
+
+    /* Switch Housing */
+    .toggle-switch {
+      position: relative;
+      display: flex;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      padding: 3px;
+      border-radius: 6px;
+      user-select: none;
+    }
+
+    /* Hide Radio Circles */
+    .toggle-switch input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    /* Clickable Labels */
+    .toggle-switch label {
+      flex: 1;
+      text-align: center;
+      padding: 6px 0;
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--text-muted);
+      cursor: pointer;
+      z-index: 2;
+      transition: color 0.2s ease;
+    }
+
+    /* Moving Background Pill */
+    .sliding-bg {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: calc(50% - 3px);
+      height: calc(100% - 6px);
+      background-color: var(--accent-color);
+      border-radius: 4px;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1;
+    }
+
+    /* Active State Text Colors */
+    #lrc-opt:checked~label[for="lrc-opt"],
+    #ttml-opt:checked~label[for="ttml-opt"] {
+      color: var(--text-main);
+    }
+
+    #ttml-opt:checked~.sliding-bg {
+      transform: translateX(100%);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="status">Loading...</div>
+
+
+  <div class="toggle-switch">
+    <input type="radio" id="lrc-opt" name="format-view" checked />
+    <label for="lrc-opt">LRC</label>
+
+    <input type="radio" id="ttml-opt" name="format-view" />
+    <label for="ttml-opt">TTML</label>
+
+    <span class="sliding-bg"></span>
+  </div>
+
+
+  <pre id="preview">—</pre>
+  <div class="row">
+    <button id="refreshBtn">Refresh</button>
+    <button id="copyBtn">Copy</button>
+    <button id="downloadBtn">Download</button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+
 </html>

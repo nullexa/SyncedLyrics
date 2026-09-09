@@ -8,6 +8,7 @@ let fullHTML = null;
 let Lyrics = null;
 let info = null;
 let filename = null;
+let ttmlOutput = false;
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -121,7 +122,7 @@ async function refreshPreview() {
    * @param {Array} data - The JSON input array.
    * @returns {string} - The formatted lyric string.
    */
-  function formatLyrics(data) {
+  function formatLyricsToLRC(data) {
     // Helper to convert seconds to [mm:ss.xx]
     const formatTime = (seconds) => {
       const mins = Math.floor(seconds / 60);
@@ -153,13 +154,82 @@ async function refreshPreview() {
     }).join("\n");
   }
 
-  Lyrics = formatLyrics(lyricsJSON);
+  function formatLyricsToTTML(data) {
+    // Helper to escape special XML characters
+    const escapeXml = (text) => {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    };
+
+    // Helper to convert seconds to TTML timestamp (hh:mm:ss.mmm)
+    const formatTime = (totalSeconds) => {
+      const hrs = Math.floor(totalSeconds / 3600);
+      const mins = Math.floor((totalSeconds % 3600) / 60);
+      const secs = Math.floor(totalSeconds % 60);
+      const millis = Math.round((totalSeconds % 1) * 1000);
+
+      const hh = hrs.toString().padStart(2, '0');
+      const mm = mins.toString().padStart(2, '0');
+      const ss = secs.toString().padStart(2, '0');
+      const mmm = millis.toString().padStart(3, '0');
+
+      return `${hh}:${mm}:${ss}.${mmm}`;
+    };
+
+    const linesXml = data.map(line => {
+      const actualWords = line.words.filter(w => w.text.trim().length > 0);
+      if (actualWords.length === 0) return '';
+
+      const lineStart = formatTime(line.start);
+
+      // Compute line end time using the start and duration of the final word
+      const lastWord = actualWords[actualWords.length - 1];
+      const lineEnd = formatTime(lastWord.start + lastWord.duration);
+
+      // Build <span> element sequence for word-level sync
+      const wordSpans = actualWords.map((wordObj, index) => {
+        const wordStart = formatTime(wordObj.start);
+        const wordEnd = formatTime(wordObj.start + wordObj.duration);
+        const text = escapeXml(wordObj.text.trim());
+
+        const prefix = index === 0 ? '' : ' ';
+        return `<span begin="${wordStart}" end="${wordEnd}">${prefix}${text}</span>`;
+      }).join('');
+
+      return `      <p begin="${lineStart}" end="${lineEnd}">${wordSpans}</p>`;
+    }).filter(line => line.length > 0).join('\n');
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling" xml:lang="en">
+  <head>
+    <styling>
+      <style xml:id="default" tts:fontSize="100%" tts:textAlign="center"/>
+    </styling>
+  </head>
+  <body>
+    <div>
+${linesXml}
+    </div>
+  </body>
+</tt>`;
+  }
+
+  if (ttmlOutput) {
+    Lyrics = formatLyricsToTTML(lyricsJSON);
+    console.log(Lyrics);
+  } else {
+    Lyrics = formatLyricsToLRC(lyricsJSON);
+    console.log(Lyrics);
+  }
   // const output = formatLyrics(input);
   // console.log(output);
 
   previewEl.textContent = Lyrics;
   // console.log('this is the variable :)', Lyrics);
-
 }
 
 /**
@@ -167,12 +237,7 @@ async function refreshPreview() {
  * https://stackoverflow.com/a/61738856
  */
 
-function downloadLrc(lrcText, filename = 'lyrics.lrc') {
-  // Ensure the filename ends with .lrc
-  if (!filename.endsWith('.lrc')) {
-    filename += '.lrc';
-  }
-
+function downloadLrc(lrcText, filename) {
   // Create a Blob containing lyrics
   const blob = new Blob([lrcText], { type: 'text/plain;charset=utf-8;' });
 
@@ -189,8 +254,6 @@ function downloadLrc(lrcText, filename = 'lyrics.lrc') {
 
   URL.revokeObjectURL(url);
 }
-
-filename = `${info}-lyrics.lrc`
 
 copyBtn.addEventListener('click', async () => {
   if (!Lyrics) {
@@ -213,8 +276,13 @@ downloadBtn.addEventListener('click', async () => {
   }
 
   try {
+    if (ttmlOutput == true) {
+      filename = `${info}.ttml`;
+    } else {
+      filename = `${info}.lrc`
+    }
     downloadLrc(Lyrics, filename);
-    setStatus('.lrc file downloaded');
+    setStatus('file downloaded');
   } catch {
     setStatus('Download failed');
   }
@@ -224,4 +292,17 @@ refreshBtn.addEventListener('click', refreshPreview);
 
 window.addEventListener('load', refreshPreview);
 
-
+document.querySelectorAll('input[name="format-view"]').forEach(radio => {
+  radio.addEventListener('change', (event) => {
+    if (event.target.checked) {
+      console.log('Selected format:', event.target.id);
+      if (event.target.id === 'ttml-opt') {
+        ttmlOutput = true;
+        refreshPreview();
+      } else {
+        ttmlOutput = false;
+        refreshPreview();
+      }
+    }
+  });
+});
