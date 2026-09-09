@@ -2,6 +2,8 @@
   <img src="./logo.svg" alt="Header Banner" width="700"/>
 </div>
 
+> [!WARNING]
+> This branch can be unstable!
 
 SongSync is a lightweight tool to extract word-by-word synced lyrics from YouTube Music. It converts lyrics displayed by the Better Lyrics extension (https://betterlyrics.org/) into Enhanced LRC (ELRC) format for easy copying.
 
